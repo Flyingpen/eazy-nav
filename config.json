@@ -1,0 +1,81 @@
+{
+  "site": {
+    "title": "我的书签导航",
+    "name": "智能书签导航",
+    "description": "基于Chrome书签的现代化导航页面，提供精美的交互体验",
+    "keywords": "书签,导航,Chrome,书签管理",
+    "author": "书签管理员",
+    "favicon": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔖</text></svg>",
+    "language": "zh-CN"
+  },
+  "seo": {
+    "ogType": "website",
+    "ogImage": "",
+    "twitterCard": "summary_large_image",
+    "themeColor": "#ffffff",
+    "robots": "index,follow"
+  },
+  "theme": {
+    "mode": "auto",
+    "primaryColor": "#007AFF",
+    "backgroundColor": "#F2F2F7",
+    "cardColor": "#ffffff",
+    "textColor": "#1D1D1F",
+    "borderColor": "#E5E5EA",
+    "shadowColor": "rgba(0,0,0,0.1)"
+  },
+  "layout": {
+    "maxWidth": "1200px",
+    "padding": "20px",
+    "borderRadius": "12px",
+    "cardSpacing": "16px",
+    "fontSize": "14px"
+  },
+  "header": {
+    "showTitle": true,
+    "showSearch": true,
+    "showThemeToggle": true,
+    "searchPlaceholder": "搜索书签...",
+    "showStats": true,
+    "showClock": true
+  },
+  "bookmarks": {
+    "source": "bookmarks.html",
+    "showIcons": true,
+    "showDescription": false,
+    "grouping": true,
+    "sorting": "default",
+    "itemsPerPage": 50
+  },
+  "features": {
+    "enableSearch": true,
+    "enableFilter": true,
+    "enableTags": false,
+    "enableFavorites": true,
+    "enableRecentVisits": true,
+    "enableExport": false,
+    "enableBackup": false
+  },
+  "animations": {
+    "enableTransitions": true,
+    "enableHover": true,
+    "enableLoading": true,
+    "enableMicroInteractions": true,
+    "transitionDuration": "0.3s",
+    "hoverScale": "1.02"
+  },
+  "performance": {
+    "enableLazyLoad": true,
+    "enableCache": true,
+    "preloadIcons": true,
+    "debounceDelay": 300
+  },
+  "advanced": {
+    "customCSS": "",
+    "customJS": "",
+    "enableAnalytics": false,
+    "analyticsId": "",
+    "enablePWA": false,
+    "manifestPath": "./manifest.json"
+  }
+}
