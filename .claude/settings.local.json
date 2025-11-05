@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m http.server 8000)",
+      "Bash(tree -L 2 /e/code/nav)",
+      "Bash(cat /e/code/nav/README.md)",
+      "Bash(tree -I \".git|.claude\" -L 3 /e/code/nav)",
+      "Bash(chmod +x /e/code/nav/start-server.sh)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
