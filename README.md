@@ -1,345 +1,178 @@
 <div align="center">
 
-# 📚 书签导航站
+# 🔖 Eazy Nav
 
-一个基于 Chrome 导出的 bookmarks.html 的现代化导航网页项目
+**基于 Chrome 书签文件的静态导航页 —— 无需数据库，开箱即用**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/your-username/bookmarks-navigation.svg?style=social&label=Star)](https://github.com/your-username/bookmarks-navigation)
-[![GitHub forks](https://img.shields.io/github/forks/your-username/bookmarks-navigation.svg?style=social&label=Fork)](https://github.com/your-username/bookmarks-navigation/fork)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-username/bookmarks-navigation)
-[![Language](https://img.shields.io/badge/language-HTML--CSS--JS-green.svg)](https://github.com/your-username/bookmarks-navigation)
+[![Deploy](https://github.com/Flyingpen/eazy-nav/actions/workflows/static.yml/badge.svg)](https://github.com/Flyingpen/eazy-nav/actions/workflows/static.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](#更新日志)
 
-[功能特性](#-功能特性) • [快速开始](#-快速开始) • [配置说明](#-配置说明) • [贡献指南](#-贡献指南) • [更新日志](#-更新日志)
-
-![Bookmarks Navigation](https://via.placeholder.com/1200x600?text=Bookmarks+Navigation+Screenshot)
+[在线演示](https://flyingpen.github.io/eazy-nav/) · [快速开始](#-快速开始) · [配置](#-配置) · [参与贡献](#-参与贡献)
 
 </div>
 
-## ✨ 项目特点
+---
 
-### 🎯 核心设计理念
-- **非侵入式设计**：完全不修改 Chrome 导出的原始 bookmarks.html 文件
-- **独立加载机制**：通过 index.html 动态读取和解析 bookmarks.html
-- **纯静态部署**：无需后端服务器，可直接部署到任何静态托管平台
-- **数据分离**：书签数据（bookmarks.html）与展示层（index.html）完全分离
+## ✨ 这是什么
 
-### 💎 界面特性
-- **现代化 UI**：采用 Tailwind CSS 构建的精美界面
-- **毛玻璃效果**：支持毛玻璃材质和动态主题切换
-- **响应式设计**：完美适配桌面端和移动端
-- **流畅动画**：入场动画、悬停效果、微交互动画
-- **深色模式**：支持浅色/深色/自动主题模式
+把 Chrome 导出的书签文件（`bookmarks.html`）直接变成一个美观的导航网站：
 
-### 🚀 功能特性
-- **实时搜索**：支持书签标题和 URL 的实时搜索过滤
-- **智能分组**：自动按文件夹层级展示书签分类
-- **图标显示**：自动获取并展示网站 favicon
-- **统计面板**：显示书签总数和分类数量
-- **时钟显示**：实时显示当前日期和时间
-- **Toast 提示**：优雅的操作反馈提示
-- **PWA 支持**：可安装到桌面，支持离线访问
-
-## 📸 项目截图
-
-| 浅色模式 | 深色模式 |
-|---------|---------|
-| ![Light Mode](https://via.placeholder.com/600x400?text=Light+Mode) | ![Dark Mode](https://via.placeholder.com/600x400?text=Dark+Mode) |
-| 搜索界面 | 移动端 |
-| ![Search](https://via.placeholder.com/600x400?text=Search+Mode) | ![Mobile](https://via.placeholder.com/300x400?text=Mobile) |
+- 📂 **自动解析书签结构** —— 文件夹变成分类，书签变成卡片，无需手动整理
+- 🔍 **实时搜索** —— 输入关键词即时过滤并高亮匹配结果
+- 🌗 **明暗主题** —— 跟随系统 + 手动切换 + localStorage 记忆，无闪烁
+- 📱 **响应式设计** —— 桌面、平板、手机都能舒适使用
+- ⚡ **PWA 支持** —— 可安装到桌面/主屏幕，离线也能访问
+- 🚀 **零构建、零依赖** —— 纯静态 HTML，Fork 后改个文件就能上线
 
 ## 🔧 技术栈
 
-- **HTML5** - 语义化标记
-- **CSS3** - 样式和动画
-  - Tailwind CSS - 实用优先的 CSS 框架
-  - 自定义 CSS 变量系统
-  - CSS Grid & Flexbox
-- **JavaScript (ES6+)** - 交互逻辑
-  - Alpine.js - 轻量级响应式框架
-  - DOMParser API - 解析 bookmarks.html
-  - Fetch API - 异步数据加载
-- **PWA** - 渐进式 Web 应用
-  - Web App Manifest
-  - Service Worker
-  - 离线缓存策略
-
-## 📁 项目结构
-
-```
-nav/
-├── index.html              # 主页面，负责加载和展示书签
-├── bookmarks.html          # Chrome 导出的书签文件（数据源）
-├── config.json             # 配置文件，控制页面行为和外观
-├── manifest.json           # PWA 配置文件
-├── service-worker.js       # Service Worker（离线支持）
-├── LICENSE                 # MIT 许可证
-├── README.md               # 项目说明文档
-│
-├── css/                    # 样式文件目录
-│   ├── variables.css       # CSS 变量
-│   ├── components.css      # 组件样式
-│   ├── utilities.css       # 工具类
-│   ├── animations.css      # 动画效果
-│   └── responsive.css      # 响应式布局
-│
-├── icons/                  # PWA 图标目录
-│   ├── icon-192x192.png
-│   ├── icon-512x512.png
-│   └── ...
-│
-└── assets/                 # 静态资源目录
-```
-
-详细说明请查看 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
+| 项 | 说明 |
+|---|---|
+| [Alpine.js 3](https://alpinejs.dev/) | 轻量响应式框架（CDN 引入） |
+| [Tailwind CSS](https://tailwindcss.com/) | 原子化 CSS（Play CDN，配合少量自定义样式） |
+| 原生 DOMParser | 解析 Netscape 格式书签文件 |
+| Service Worker | PWA 离线缓存（stale-while-revalidate） |
 
 ## 🚀 快速开始
 
-### 1. 克隆项目
+### 方式一：直接部署（推荐）
+
+1. **Fork 本仓库**
+2. **用 Chrome 导出你的书签**：`chrome://bookmarks` → 右上角 ⋮ → 导出书签
+3. **替换仓库根目录的 `bookmarks.html`** 为你导出的文件
+4. 完成。推送到 GitHub 后 [GitHub Pages](https://pages.github.com/) 会自动部署
+   （或直接启用 **Settings → Pages → GitHub Actions**）
+
+> 想改站名、作者、主题色？编辑 [`config.json`](config.json) 即可，见下方[配置说明](#-配置)。
+
+### 方式二：本地运行
+
+书签数据通过 `fetch` 加载，需要本地 HTTP 服务器（直接双击打开会因浏览器安全策略无法加载数据）：
 
 ```bash
-git clone https://github.com/your-username/bookmarks-navigation.git
-cd bookmarks-navigation
+git clone https://github.com/Flyingpen/eazy-nav.git
+cd eazy-nav
+
+# 任选其一
+python -m http.server 8000
+npx http-server -p 8000
 ```
 
-### 2. 导出 Chrome 书签
+访问 <http://localhost:8000>
 
-1. 打开 Chrome 浏览器
-2. 进入书签管理器（Ctrl/Cmd + Shift + O）
-3. 点击右上角"⋮"菜单
-4. 选择"导出书签"
-5. 保存为 `bookmarks.html`
+## ⚙️ 配置
 
-### 3. 替换书签文件
+编辑根目录的 [`config.json`](config.json)：
 
-将导出的 `bookmarks.html` 文件放到项目根目录，替换原有文件即可。
-
-### 4. 配置个性化设置
-
-编辑 `config.json` 文件来自定义页面：
-
-```json
+```jsonc
 {
   "site": {
-    "title": "我的书签导航",
-    "name": "智能书签导航",
-    "description": "基于Chrome书签的现代化导航页面",
-    "author": "书签管理员"
+    "title": "浏览器标签页标题",
+    "name": "页头显示的站名",
+    "description": "站点描述（SEO / meta）",
+    "author": "你的名字"
   },
   "theme": {
-    "mode": "auto",
+    "mode": "auto",        // auto：跟随系统 | light | dark
     "primaryColor": "#007AFF"
   },
   "header": {
-    "showSearch": true,
-    "showThemeToggle": true,
-    "showStats": true,
-    "showClock": true
+    "showSearch": true,       // 显示搜索框
+    "showThemeToggle": true,  // 显示主题切换按钮
+    "showStats": true,        // 显示书签/分类统计
+    "showClock": true         // 显示时钟
+  },
+  "bookmarks": {
+    "source": "bookmarks.html"  // 书签数据文件路径
   }
 }
 ```
 
-### 5. 本地运行
+> 💡 用户手动切换过主题后，选择会存入 localStorage，优先级高于 `theme.mode`。
 
-#### 方式一：使用 Python（推荐）
-```bash
-# Python 3
-python -m http.server 8000
+## 📁 项目结构
 
-# Python 2
-python -m SimpleHTTPServer 8000
+```
+eazy-nav/
+├── index.html          # 主页面（含全部样式与逻辑）
+├── bookmarks.html      # Chrome 导出的书签数据 ← 替换这个
+├── config.json         # 站点配置
+├── manifest.json       # PWA 清单
+├── service-worker.js   # Service Worker（离线缓存）
+├── icons/icon.svg      # PWA / favicon 图标
+├── robots.txt          # 爬虫规则
+├── sitemap.xml         # 站点地图
+└── .github/workflows/
+    └── static.yml      # GitHub Pages 部署工作流
 ```
 
-#### 方式二：使用 Node.js
-```bash
-npx http-server -p 8000
+## 🧠 工作原理
+
+```
+浏览器加载 index.html
+        │
+        ▼
+fetch config.json ──► 应用站点信息与主题
+        │
+        ▼
+fetch bookmarks.html（Netscape 格式）
+        │
+        ▼
+规范化 DOCTYPE ──► DOMParser 解析
+        │
+        ▼
+逐层遍历 <DT>，用 ":scope >" 严格匹配直接子元素
+（避免把子文件夹的第一个书签误解析成文件夹）
+        │
+        ▼
+生成分类卡片 + 书签列表（所有动态内容经 HTML 转义）
+        │
+        ▼
+Alpine.js 接管交互：搜索过滤、主题切换、时钟
 ```
 
-#### 方式三：使用 PHP
-```bash
-php -S localhost:8000
-```
+## 🔒 安全说明
 
-然后访问 `http://localhost:8000`
+书签文件虽由自己生成，但本项目仍按"不可信输入"处理：
 
-### 6. 部署到服务器
+- 所有书签标题、URL、图标地址渲染前均经过 **HTML 实体转义**（含引号）
+- 图标 URL 仅接受 `http(s):` 与 `data:image:` 协议，`javascript:` 等危险协议会被丢弃
+- 外链统一携带 `rel="noopener noreferrer"`
 
-#### GitHub Pages
-1. Fork 本项目
-2. 在 Settings > Pages 中启用
-3. 选择 Source 分支（通常是 `main`）
-4. 等待部署完成
+## 📦 部署到其他平台
 
-#### Vercel
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/bookmarks-navigation)
+任何支持静态文件托管的服务都可以：Vercel、Netlify、Cloudflare Pages、自己的服务器……
+把仓库内容原样上传即可，没有构建步骤。
 
-#### Netlify
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/your-username/bookmarks-navigation)
+## 🤝 参与贡献
 
-## 📖 使用指南
+欢迎 Issue 和 PR！
 
-### 配置选项详解
+1. Fork → 创建分支（`git checkout -b feat/xxx`）
+2. 提交遵循 [Conventional Commits](https://www.conventionalcommits.org/)（`feat:` `fix:` `docs:` …）
+3. 本地用 HTTP 服务器验证后发起 PR
 
-| 配置项 | 说明 | 默认值 | 示例 |
-|--------|------|--------|------|
-| `site.title` | 浏览器标签页标题 | "我的书签导航" | "我的个人导航" |
-| `site.name` | 页面显示名称 | "智能书签导航" | "个人书签管理" |
-| `site.description` | 网站描述（SEO） | - | "高效管理你的书签" |
-| `site.author` | 作者名称 | "书签管理员" | "你的名字" |
-| `theme.mode` | 主题模式 | "auto" | "light" / "dark" |
-| `theme.primaryColor` | 主题色 | "#007AFF" | "#FF6B6B" |
-| `header.showSearch` | 显示搜索框 | true | false |
-| `bookmarks.source` | 书签文件路径 | "bookmarks.html" | "my-bookmarks.html" |
+待实现的想法：书签编辑、批量导入/导出、标签系统、键盘快捷键、多语言。
 
-## 🔍 搜索功能
+## 📈 更新日志
 
-实时搜索支持：
-- ✅ 书签标题模糊匹配
-- ✅ URL 匹配
-- ✅ 高亮显示匹配结果
-- ✅ 只显示包含匹配项的文件夹
-- ✅ 防抖优化（300ms）
+### v1.1.0（2026-09-06）
 
-## 📱 响应式设计
+- 🐛 修复书签解析：文件夹数量 12 → 11，书签数量 221 → **210**（与真实数据一致）
+  原实现会穿透嵌套层级，把每个子文件夹的第一个书签误解析成"文件夹"
+- 🔒 修复 XSS 隐患：`escapeHtml` 补齐引号转义，书签图标 URL 增加协议白名单
+- 🐛 修复搜索输入 `(` `[` `+` 等正则特殊字符时的崩溃（特殊字符已转义）
+- ✨ 修复主题持久化：手动切换主题后写入 localStorage，刷新后恢复；Tailwind `darkMode` 改为 `class` 策略，切换即时生效且无闪烁
+- ✨ PWA 完整可用：注册 Service Worker、修复 manifest `start_url`/`scope`（适配 GitHub Pages 子路径）、新增 SVG 图标
+- ⚡ 性能：移除未使用的 CSS 文件与死代码；书签图标懒加载；增加 `[x-cloak]` 防止 Alpine 初始化前闪烁
+- 🧹 精简 `config.json` 至实际生效的配置项；清理调试日志
+- 📝 重写 README；SEO 文件使用真实站点地址
 
-| 设备类型 | 屏幕宽度 | 布局特点 |
-|---------|---------|---------|
-| 移动端 | < 640px | 单列布局，大按钮 |
-| 平板端 | 640px - 1024px | 自适应列数 |
-| 桌面端 | > 1024px | 多列网格，毛玻璃效果 |
+### v1.0.0（2025-11-01）
 
-## 🎯 浏览器兼容性
-
-| 浏览器 | 最低版本 | 状态 |
-|--------|---------|------|
-| Chrome | 90+ | ✅ 完全支持 |
-| Edge | 90+ | ✅ 完全支持 |
-| Firefox | 88+ | ✅ 完全支持 |
-| Safari | 14+ | ✅ 完全支持 |
-
-## 🤝 贡献指南
-
-我们欢迎所有形式的贡献！您可以：
-
-- 🐛 提交 Bug 报告
-- 💡 提出新功能建议
-- 📝 改进文档
-- 🔧 提交代码修复
-- 🌐 帮助翻译
-
-请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详细的贡献指南。
-
-### 贡献步骤
-
-1. **Fork** 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 **Pull Request**
-
-### 贡献者
-
-感谢所有为本项目做出贡献的开发者！ 🙏
-
-<a href="https://github.com/your-username/bookmarks-navigation/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=your-username/bookmarks-navigation" />
-</a>
-
-## 📋 更新日志
-
-详细的版本更新记录请查看 [CHANGELOG.md](CHANGELOG.md)
-
-### v1.0.0 (2025-11-01)
-- ✨ 首次发布
-- 🎨 现代化 UI 设计
-- 🌙 深色模式支持
-- 🔍 实时搜索功能
-- 📱 PWA 支持
-- 📦 MIT 开源协议
+- 首个公开版本：Chrome 书签解析 + 搜索 + 明暗主题 + PWA
 
 ## 📄 许可证
 
-本项目基于 [MIT](LICENSE) 许可证开源
-
-```
-MIT License
-
-Copyright (c) 2025 bookmarks-navigation
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
-
-## 💡 常见问题
-
-<details>
-<summary><strong>Q: 如何更新书签？</strong></summary>
-
-A: 重新从 Chrome 导出书签，替换 `bookmarks.html` 文件即可。页面会自动重新加载数据。
-
-</details>
-
-<details>
-<summary><strong>Q: 可以修改 bookmarks.html 吗？</strong></summary>
-
-A: 不建议手动修改。本项目的设计理念是保持 bookmarks.html 原始状态，所有定制通过 config.json 完成。
-
-</details>
-
-<details>
-<summary><strong>Q: 为什么本地打开不显示书签？</strong></summary>
-
-A: 可能是浏览器安全策略限制。建议使用本地 HTTP 服务器运行（见"快速开始"章节）。
-
-</details>
-
-<details>
-<summary><strong>Q: 如何自定义样式？</strong></summary>
-
-A: 可以通过修改 `css/` 目录下的文件来自定义样式，或通过 config.json 的 `advanced.customCSS` 字段添加自定义 CSS。
-
-</details>
-
-更多问题请查看 [FAQ 文档](链接到完整FAQ) 或提交 [Issue](../../issues)
-
-## 🎯 开发计划
-
-- [ ] 支持书签编辑功能
-- [ ] 添加书签导入/导出功能
-- [ ] 支持多标签页管理
-- [ ] 添加书签分享功能
-- [ ] 多语言支持
-- [ ] 书签图标缓存优化
-- [ ] 键盘快捷键支持
-
-## 🙏 致谢
-
-感谢以下开源项目和服务：
-
-- [Alpine.js](https://alpinejs.dev/) - 响应式框架
-- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
-- Chrome 浏览器 - 书签数据源
-- 所有贡献者的支持和反馈
-
-## ⭐ 支持我们
-
-如果这个项目对您有帮助，欢迎：
-
-- ⭐ Star 本项目
-- 🐛 提交 Bug 报告
-- 💡 提出建议
-- 🤝 参与贡献
-
-您的支持是我们最大的动力！
-
----
-
-<div align="center">
-
-**⭐ 如果这个项目对你有帮助，欢迎 Star！ ⭐**
-
-[⬆ 回到顶部](#-书签导航站)
-
-</div>
+[MIT](LICENSE) © 2026 Flyingpen
