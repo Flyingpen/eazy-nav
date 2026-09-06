@@ -1,52 +1,74 @@
-const CACHE_NAME = 'bookmarks-nav-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/bookmarks.html',
-  '/config.json',
-  '/css/variables.css',
-  '/css/components.css',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'
+/* Eazy Nav Service Worker
+ * 策略：
+ *  - 同源静态资源：stale-while-revalidate（先缓存后更新）
+ *  - 跨域 CDN 资源：network-first（失败时回退缓存）
+ *  - 书签数据 bookmarks.html：network-first，保证内容及时更新
+ */
+const CACHE_NAME = 'eazy-nav-v2';
+
+const PRECACHE_URLS = [
+  './',
+  './index.html',
+  './bookmarks.html',
+  './config.json',
+  './manifest.json',
+  './icons/icon.svg'
 ];
 
-// Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting())
   );
 });
 
-// Fetch event - serve cached content when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
-});
-
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isBookmarks = isSameOrigin && url.pathname.endsWith('/bookmarks.html');
+
+  if (isSameOrigin && !isBookmarks) {
+    // 同源静态资源：先返回缓存，后台更新
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const network = fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached);
+        return cached || network;
+      })
+    );
+  } else {
+    // 跨域 CDN / 书签数据：网络优先，失败回退缓存
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+  }
 });

@@ -21,11 +21,28 @@
   <meta name="twitter:description" id="twitter-description" content="基于Chrome书签的现代化导航页面，提供精美的交互体验">
 
   <link rel="icon" id="favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔖</text></svg>">
+  <link rel="manifest" href="manifest.json">>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // 深色模式跟随 <html> 上的 .dark 类，与 data-theme 主题变量统一由 JS 控制
+    tailwind.config = { darkMode: 'class' };
+    // 首帧渲染前应用已保存的主题，避免闪烁
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var dark = saved ? saved === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', dark);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    })();
+  </script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <style>
+    [x-cloak] {
+      display: none !important;
+    }
+
     :root {
       --primary-color: #007AFF;
       --background-color: #F2F2F7;
@@ -98,21 +115,6 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: var(--text-secondary);
-    }
-
-    /* 加载动画 */
-    @keyframes shimmer {
-      0% { background-position: -1000px 0; }
-      100% { background-position: 1000px 0; }
-    }
-
-    .skeleton {
-      background: linear-gradient(90deg,
-        var(--border-color) 25%,
-        rgba(229, 229, 234, 0.3) 50%,
-        var(--border-color) 75%);
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite;
     }
 
     /* 微交互动画 */
@@ -354,10 +356,6 @@
       :root {
         --border-radius: 8px;
       }
-
-      #bookmarks {
-        height: calc(100vh - 300px);
-      }
     }
 
     /* 动画入场效果 */
@@ -432,12 +430,12 @@
     }
   </style>
 </head>
-<body x-data="navApp()" x-init="init()" :data-theme="theme" class="theme-transition min-h-screen">
+<body x-data="navApp()" x-init="init()" class="theme-transition min-h-screen">
   <!-- 主容器 -->
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 
     <!-- 头部导航 -->
-    <header class="glass-effect sticky top-0 z-50 animate-in">
+    <header x-cloak class="glass-effect sticky top-0 z-50 animate-in">
       <div class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <!-- 左侧：标题和统计 -->
@@ -541,10 +539,10 @@
 
       <!-- 底部信息 -->
       <footer class="mt-12 text-center text-sm text-gray-500 dark:text-gray-400 animate-in">
-        <p>🔖 基于 Chrome 书签的现代化导航页面</p>
-        <p class="mt-2">
+        <p>
           <span x-text="new Date().getFullYear()"></span> •
-          <span x-text="config.site.author"></span>
+          <span x-text="config.site.author"></span> •
+          <a href="https://github.com/Flyingpen/eazy-nav" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 transition-colors">GitHub</a>
         </p>
       </footer>
     </main>
@@ -571,19 +569,12 @@
           date: '',
           time: ''
         },
-        bookmarksDoc: null,
         parsedBookmarks: [],
 
         async init() {
           try {
-            console.log('开始初始化...');
-
-            // 加载配置
+            // 加载配置（内部会根据 config 与 localStorage 初始化主题）
             await this.loadConfig();
-            console.log('配置加载完成');
-
-            // 初始化主题
-            this.initTheme();
 
             // 更新页面元信息
             this.updateMeta();
@@ -591,19 +582,11 @@
             // 开始时钟
             this.startClock();
 
-            // 加载书签数据
-            console.log('开始加载书签...');
+            // 加载并渲染书签
             await this.loadBookmarksData();
-            console.log('书签数据加载完成，共', this.parsedBookmarks.length, '个文件夹');
-
-            // 渲染书签
             this.renderBookmarks();
-            console.log('书签渲染完成');
 
-            // 关键：设置加载完成状态
             this.loading = false;
-            this.showToast('书签加载完成', 'success');
-
           } catch (error) {
             console.error('初始化失败:', error);
             this.loading = false; // 即使失败也要隐藏加载状态
@@ -612,51 +595,97 @@
         },
 
         async loadConfig() {
+          const defaultConfig = {
+            site: {
+              title: '我的书签导航',
+              name: '智能书签导航',
+              description: '基于 Chrome 书签的现代化导航页面',
+              keywords: '书签,导航,Chrome',
+              author: 'Flyingpen',
+              favicon: ''
+            },
+            theme: { mode: 'auto', primaryColor: '#007AFF' },
+            header: {
+              showSearch: true,
+              showThemeToggle: true,
+              showStats: true,
+              showClock: true,
+              searchPlaceholder: '搜索书签...'
+            },
+            bookmarks: { source: 'bookmarks.html' }
+          };
+
           try {
             const response = await fetch('config.json');
-            this.config = await response.json();
-
-            // 应用主题配置
-            if (this.config.theme.mode === 'auto') {
-              this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            } else {
-              this.theme = this.config.theme.mode;
-            }
-
-          } catch (error) {
-            console.error('加载配置失败:', error);
-            // 使用默认配置
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const loaded = await response.json();
+            // 与默认配置合并，保证缺少的键有兜底值
             this.config = {
-              site: { name: '我的书签导航', description: '基于Chrome书签的现代化导航页面' },
-              header: { showSearch: true, showThemeToggle: true, showStats: true, showClock: true },
-              bookmarks: { source: 'bookmarks.html' }
+              ...defaultConfig,
+              ...loaded,
+              site: { ...defaultConfig.site, ...loaded.site },
+              theme: { ...defaultConfig.theme, ...loaded.theme },
+              header: { ...defaultConfig.header, ...loaded.header },
+              bookmarks: { ...defaultConfig.bookmarks, ...loaded.bookmarks }
             };
+          } catch (error) {
+            console.warn('加载 config.json 失败，使用默认配置:', error.message);
+            this.config = defaultConfig;
+          }
+
+          // config.theme.mode 只决定"默认主题"；
+          // 用户手动切换过主题（localStorage 有值）时以用户选择为准
+          if (localStorage.getItem('theme') === null) {
+            if (this.config.theme.mode === 'auto') {
+              this.applyTheme(
+                window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+                false
+              );
+              this.watchSystemTheme();
+            } else {
+              this.applyTheme(this.config.theme.mode === 'dark' ? 'dark' : 'light', false);
+            }
+          } else {
+            // 同步 Alpine 状态与首帧脚本已应用的主题
+            this.theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
           }
         },
 
-        initTheme() {
-          // 监听系统主题变化
-          if (this.config.theme?.mode === 'auto') {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-              this.theme = e.matches ? 'dark' : 'light';
-            });
+        watchSystemTheme() {
+          // 仅在用户未手动选择主题时跟随系统
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (localStorage.getItem('theme') === null) {
+              this.applyTheme(e.matches ? 'dark' : 'light', false);
+            }
+          });
+        },
+
+        applyTheme(theme, persist = true) {
+          this.theme = theme;
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+          const meta = document.getElementById('theme-color');
+          if (meta) {
+            meta.content = theme === 'dark'
+              ? '#000000'
+              : (this.config.theme?.primaryColor || '#ffffff');
           }
+          if (persist) localStorage.setItem('theme', theme);
         },
 
         updateMeta() {
-          if (this.config.site) {
-            document.getElementById('page-title').textContent = this.config.site.title || '我的书签导航';
-            document.getElementById('page-description').content = this.config.site.description || '基于Chrome书签的现代化导航页面';
-            document.getElementById('page-keywords').content = this.config.site.keywords || '书签,导航,Chrome';
-            document.getElementById('page-author').content = this.config.site.author || '书签管理员';
-            document.getElementById('favicon').href = this.config.site.favicon || '🔖';
-            document.getElementById('theme-color').content = this.config.theme?.primaryColor || '#007AFF';
-          }
+          if (!this.config.site) return;
+          const site = this.config.site;
+          document.getElementById('page-title').textContent = site.title || '我的书签导航';
+          document.getElementById('page-description').content = site.description || '';
+          document.getElementById('page-keywords').content = site.keywords || '';
+          document.getElementById('page-author').content = site.author || '';
+          const favicon = document.getElementById('favicon');
+          if (favicon && site.favicon) favicon.href = site.favicon;
         },
 
         toggleTheme() {
-          this.theme = this.theme === 'light' ? 'dark' : 'light';
-          localStorage.setItem('theme', this.theme);
+          this.applyTheme(this.theme === 'light' ? 'dark' : 'light');
         },
 
         startClock() {
@@ -680,196 +709,121 @@
         },
 
         async loadBookmarksData() {
-          console.log('开始加载书签文件:', this.config.bookmarks.source);
           const response = await fetch(this.config.bookmarks.source);
+          if (!response.ok) {
+            throw new Error(`书签文件加载失败 (HTTP ${response.status})`);
+          }
           let htmlText = await response.text();
-          console.log('原始文件内容长度:', htmlText.length);
-          console.log('文件前200个字符:', htmlText.substring(0, 200));
 
-          // 🔧 关键修复：将NETSCAPE格式转换为标准HTML5
-          // Chrome导出的书签使用非标准的NETSCAPE DOCTYPE
-          // 我们需要替换它以便DOMParser正确解析
+          // Chrome 导出的书签使用非标准的 NETSCAPE DOCTYPE，
+          // 需转换为标准 HTML5 以便 DOMParser 正确解析
           htmlText = htmlText
             .replace(/<!DOCTYPE NETSCAPE-Bookmark-file-1>/gi, '<!DOCTYPE html>')
             .replace(/<META HTTP-EQUIV="Content-Type" CONTENT="text\/html; charset=UTF-8">/gi, '<meta charset="UTF-8">');
 
-          console.log('✓ 已规范化HTML格式');
-
-          // 解析HTML
           const parser = new DOMParser();
-          this.bookmarksDoc = parser.parseFromString(htmlText, 'text/html');
+          const doc = parser.parseFromString(htmlText, 'text/html');
 
-          // 检查解析是否成功
-          if (this.bookmarksDoc.querySelector('parsererror')) {
-            console.error('❌ HTML解析失败！');
+          if (doc.querySelector('parsererror')) {
             throw new Error('书签文件格式错误，无法解析');
           }
 
-          console.log('✓ HTML解析成功');
-          console.log('Document title:', this.bookmarksDoc.title);
-          console.log('Body存在:', !!this.bookmarksDoc.body);
-
-          this.parsedBookmarks = this.parseBookmarkStructure(this.bookmarksDoc);
-          console.log('✓ 书签解析完成，找到', this.parsedBookmarks.length, '个文件夹');
+          this.parsedBookmarks = this.parseBookmarkStructure(doc);
         },
 
         parseBookmarkStructure(doc) {
           const structure = [];
-          let processedFolders = 0;
 
-          console.log('=== 开始解析书签结构 ===');
-
-          // 🔧 使用更兼容的方法：直接遍历子节点
+          // 收集元素的直接子 DT。
+          // 不用 querySelector('DT')：它会穿透嵌套层级，把子层级元素误当成当前层级
           const getDirectChildDTs = (element) => {
             const result = [];
-            for (let i = 0; i < element.children.length; i++) {
-              if (element.children[i].tagName === 'DT') {
-                result.push(element.children[i]);
-              }
+            for (const child of element.children) {
+              if (child.tagName === 'DT') result.push(child);
             }
             return result;
           };
 
           // 递归收集所有包含直接链接的文件夹
-          const collectFolders = (dlElement, parentPath = '', depth = 0) => {
-            if (!dlElement) {
-              console.log('警告：dlElement 为空');
-              return;
-            }
+          const collectFolders = (dlElement, parentPath = '') => {
+            if (!dlElement) return;
 
-            const indent = '  '.repeat(depth);
-            console.log(`${indent}处理 DL 层级 ${depth}, 父路径: "${parentPath}"`);
-
-            const dtElements = getDirectChildDTs(dlElement);
-            console.log(`${indent}找到 ${dtElements.length} 个直接子 DT 元素`);
-
-            for (let i = 0; i < dtElements.length; i++) {
-              const dt = dtElements[i];
-
-              // 🔍 详细调试：查看DT的结构
-              console.log(`${indent}  [DT ${i+1}] HTML:`, dt.innerHTML.substring(0, 100));
-
-              // 查找H3或A元素（不区分大小写）
-              const h3 = dt.querySelector('H3, h3');
-              const a = dt.querySelector('A[href], a[href]');
-
-              console.log(`${indent}  [DT ${i+1}] 有H3:`, !!h3, '有A:', !!a);
+            for (const dt of getDirectChildDTs(dlElement)) {
+              // :scope > 限定只匹配 DT 的直接子元素。
+              // Chrome 书签结构: <DT><H3>标题</H3><DL>子项...</DL></DT>
+              // 若用普通 querySelector('A[href]')，会匹配到子文件夹里的第一个链接，
+              // 导致子文件夹的第一个书签被误当成子文件夹本身（幽灵书签）
+              const h3 = dt.querySelector(':scope > H3');
+              const a = dt.querySelector(':scope > A[href]');
 
               if (h3) {
                 // 这是一个文件夹
                 const folderTitle = h3.textContent.trim();
-                const fullPath = parentPath ? `${parentPath} > ${folderTitle}` : folderTitle;
-                console.log(`${indent}  📁 文件夹: "${folderTitle}"`);
+                const fullPath = parentPath ? `${parentPath} / ${folderTitle}` : folderTitle;
 
-                // 🔧 关键修复：DL在DT内部，而不是DT的兄弟元素！
-                // Chrome书签结构: <DT><H3>标题</H3><DL>...</DL></DT>
-                let folderDL = dt.querySelector('DL, dl');
-
+                let folderDL = dt.querySelector(':scope > DL');
                 if (!folderDL) {
-                  console.log(`${indent}    ⚠ 在DT内部未找到DL，尝试查找兄弟元素...`);
-                  // 备用方案：查找nextElementSibling（某些书签格式可能这样）
-                  folderDL = dt.nextElementSibling;
-                  while (folderDL && folderDL.tagName === 'P') {
-                    folderDL = folderDL.nextElementSibling;
+                  // 备用方案：某些书签格式把 DL 放在 DT 的兄弟位置
+                  let sibling = dt.nextElementSibling;
+                  while (sibling && sibling.tagName === 'P') {
+                    sibling = sibling.nextElementSibling;
                   }
-                  if (folderDL && folderDL.tagName !== 'DL') {
-                    folderDL = null;
-                  }
+                  if (sibling && sibling.tagName === 'DL') folderDL = sibling;
                 }
-
-                if (!folderDL) {
-                  console.log(`${indent}    ⚠ 仍未找到对应的DL，跳过此文件夹`);
-                  continue;
-                }
+                if (!folderDL) continue;
 
                 // 收集这个文件夹下的直接链接
                 const bookmarks = [];
-                const subDTs = getDirectChildDTs(folderDL);
-                console.log(`${indent}    包含 ${subDTs.length} 个子项`);
-
-                for (const subDT of subDTs) {
-                  const subA = subDT.querySelector('A[href], a[href]');
+                for (const subDT of getDirectChildDTs(folderDL)) {
+                  const subA = subDT.querySelector(':scope > A[href]');
                   if (subA) {
-                    const title = subA.textContent.trim();
                     bookmarks.push({
-                      title: title,
+                      title: subA.textContent.trim(),
                       url: subA.getAttribute('href'),
-                      icon: subA.getAttribute('ICON') || subA.getAttribute('icon') || '',
-                      addDate: subA.getAttribute('ADD_DATE') || ''
+                      icon: subA.getAttribute('ICON') || ''
                     });
-                    if (depth <= 1) { // 只在前两层打印详细链接
-                      console.log(`${indent}      🔗 "${title}"`);
-                    }
                   }
                 }
 
-                // 如果这个文件夹有直接链接，添加到结果中
+                // 只要这个文件夹有直接链接就加入结果
                 if (bookmarks.length > 0) {
-                  structure.push({
-                    title: fullPath,
-                    bookmarks: bookmarks
-                  });
-                  processedFolders++;
-                  console.log(`${indent}    ✅ "${fullPath}" (${bookmarks.length} 个书签)`);
+                  structure.push({ title: fullPath, bookmarks });
                 }
 
                 // 递归处理子文件夹
-                collectFolders(folderDL, fullPath, depth + 1);
-
+                collectFolders(folderDL, fullPath);
               } else if (a && !parentPath) {
-                // 顶层直接链接（通常很少见）
-                console.log(`${indent}  🔗 顶层链接: "${a.textContent.trim()}"`);
+                // 顶层直接链接（较少见），归入"未分类"
+                if (!structure._topLevel) {
+                  structure._topLevel = { title: '未分类', bookmarks: [] };
+                  structure.push(structure._topLevel);
+                }
+                structure._topLevel.bookmarks.push({
+                  title: a.textContent.trim(),
+                  url: a.getAttribute('href'),
+                  icon: a.getAttribute('ICON') || ''
+                });
               }
             }
           };
 
-          // 从根 DL 开始解析
-          console.log('查找根 DL 元素...');
           const rootDL = doc.querySelector('DL');
-          if (!rootDL) {
-            console.error('❌ 错误：未找到根 DL 元素');
-            console.log('文档body内容:', doc.body ? doc.body.innerHTML.substring(0, 500) : 'body为空');
-            return structure;
-          }
+          if (!rootDL) return structure;
 
-          console.log('✅ 找到根 DL 元素，开始递归解析...\n');
           collectFolders(rootDL);
-
-          console.log(`\n=== ✅ 解析完成！===`);
-          console.log(`📊 统计：${processedFolders} 个文件夹，${structure.reduce((sum, f) => sum + f.bookmarks.length, 0)} 个书签`);
-
-          if (structure.length > 0) {
-            console.log('\n📋 示例数据（前2个文件夹）:');
-            structure.slice(0, 2).forEach(folder => {
-              console.log(`  - ${folder.title}: ${folder.bookmarks.length}个书签`);
-            });
-          } else {
-            console.warn('⚠️ 警告：没有解析到任何书签数据！');
-          }
-
           return structure;
         },
 
         renderBookmarks() {
-          console.log('=== 开始渲染书签 ===');
           const container = document.getElementById('bookmarks-container');
-
-          if (!container) {
-            console.error('错误：找不到 bookmarks-container 元素！');
-            return;
-          }
-
-          console.log('容器元素找到:', container);
-          console.log('准备渲染的书签数据:', this.parsedBookmarks);
-          console.log('文件夹数量:', this.parsedBookmarks.length);
+          if (!container) return;
 
           if (!this.parsedBookmarks || this.parsedBookmarks.length === 0) {
-            console.warn('警告：没有书签数据可渲染');
             container.innerHTML = `
               <div class="card p-8 text-center">
                 <p class="text-2xl mb-4">📭</p>
                 <p class="text-gray-600 dark:text-gray-400">未找到书签数据</p>
-                <p class="text-sm text-gray-500 mt-2">请检查 bookmarks.html 文件</p>
+                <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">请检查 bookmarks.html 文件</p>
               </div>
             `;
             return;
@@ -877,9 +831,7 @@
 
           let html = '<div class="bookmarks-grid">';
 
-          this.parsedBookmarks.forEach((folder, index) => {
-            console.log(`渲染文件夹 ${index + 1}: ${folder.title}, 书签数: ${folder.bookmarks.length}`);
-
+          this.parsedBookmarks.forEach((folder) => {
             if (folder.bookmarks.length === 0) return;
 
             html += `
@@ -893,9 +845,13 @@
             `;
 
             folder.bookmarks.forEach(bookmark => {
-              const iconHtml = bookmark.icon ?
-                `<img src="${bookmark.icon}" alt="" class="bookmark-icon" onerror="this.style.display='none'">` :
-                '<span class="bookmark-default-icon">🔗</span>';
+              // 图标仅接受 http(s)/data:image 地址且属性值转义，
+              // 防止恶意书签文件注入 javascript: URL 或破坏属性边界
+              const icon = bookmark.icon || '';
+              const safeIcon = /^(https?:\/\/|data:image\/)/i.test(icon) ? this.escapeHtml(icon) : '';
+              const iconHtml = safeIcon
+                ? `<img src="${safeIcon}" alt="" class="bookmark-icon" loading="lazy" onerror="this.style.display='none'">`
+                : '<span class="bookmark-default-icon">🔗</span>';
 
               html += `
                 <a href="${this.escapeHtml(bookmark.url)}" class="bookmark-item" target="_blank" rel="noopener noreferrer">
@@ -917,147 +873,34 @@
           });
 
           html += '</div>';
-
-          console.log('HTML 生成完成，长度:', html.length);
           container.innerHTML = html;
-          console.log('HTML 已插入到容器');
 
-          // 统计书签数量
           this.calculateStats();
-          console.log('=== 书签渲染完成 ===');
         },
 
         escapeHtml(text) {
           const div = document.createElement('div');
-          div.textContent = text;
-          return div.innerHTML;
+          div.textContent = text == null ? '' : String(text);
+          // div.innerHTML 不会转义引号，而引号能跳出 HTML 属性边界，必须手动补上
+          return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         },
 
         getDomainFromUrl(url) {
           try {
-            const domain = new URL(url).hostname;
-            return domain.replace('www.', '');
+            // 只去掉开头的前缀 "www."，避免误伤路径里含 www. 的情况
+            return new URL(url).hostname.replace(/^www\./, '');
           } catch {
             return url;
           }
         },
 
         calculateStats() {
-          try {
-            let totalBookmarks = 0;
-            this.parsedBookmarks.forEach(folder => {
-              totalBookmarks += folder.bookmarks.length;
-            });
-
-            this.stats.totalBookmarks = totalBookmarks;
-            this.stats.totalCategories = this.parsedBookmarks.length;
-
-          } catch (error) {
-            console.error('统计计算失败:', error);
-          }
-        },
-
-        injectStyles(doc) {
-          const style = doc.createElement('style');
-          style.textContent = `
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif !important;
-              background: transparent !important;
-              padding: 0 !important;
-              margin: 0 !important;
-            }
-
-            h1 {
-              display: none !important;
-            }
-
-            h3 {
-              font-size: 1.125rem !important;
-              font-weight: 600 !important;
-              color: #1D1D1F !important;
-              margin: 1.5rem 0 0.75rem !important;
-              padding: 0.5rem 1rem !important;
-              background: rgba(0, 122, 255, 0.1) !important;
-              border-left: 3px solid #007AFF !important;
-              border-radius: 0 8px 8px 0 !important;
-              transition: all 0.2s ease !important;
-            }
-
-            h3:hover {
-              background: rgba(0, 122, 255, 0.15) !important;
-              transform: translateX(2px) !important;
-            }
-
-            a {
-              display: inline-block !important;
-              padding: 0.625rem 1.25rem !important;
-              margin: 0.25rem !important;
-              color: #007AFF !important;
-              text-decoration: none !important;
-              border-radius: 8px !important;
-              transition: all 0.2s ease !important;
-              border: 1px solid transparent !important;
-              font-size: 0.875rem !important;
-              font-weight: 500 !important;
-              position: relative !important;
-            }
-
-            a:hover {
-              background: rgba(0, 122, 255, 0.1) !important;
-              border-color: rgba(0, 122, 255, 0.2) !important;
-              transform: translateX(4px) !important;
-            }
-
-            a:active {
-              transform: translateX(2px) scale(0.98) !important;
-            }
-
-            a::before {
-              content: "🔗" !important;
-              margin-right: 0.5rem !important;
-              opacity: 0.6 !important;
-              transition: opacity 0.2s ease !important;
-            }
-
-            a:hover::before {
-              opacity: 1 !important;
-            }
-
-            dl dl {
-              margin-left: 1.5rem !important;
-              border-left: 2px solid #E5E5EA !important;
-              padding-left: 1rem !important;
-              margin-top: 0.5rem !important;
-            }
-
-            .highlight {
-              background: rgba(255, 204, 0, 0.3) !important;
-              padding: 2px 4px !important;
-              border-radius: 3px !important;
-            }
-
-            /* 深色模式样式 */
-            @media (prefers-color-scheme: dark) {
-              h3 {
-                color: #FFFFFF !important;
-                background: rgba(10, 132, 255, 0.15) !important;
-              }
-
-              a {
-                color: #0A84FF !important;
-              }
-
-              a:hover {
-                background: rgba(10, 132, 255, 0.15) !important;
-                border-color: rgba(10, 132, 255, 0.3) !important;
-              }
-
-              dl dl {
-                border-left-color: #38383A !important;
-              }
-            }
-          `;
-          doc.head.appendChild(style);
+          let totalBookmarks = 0;
+          this.parsedBookmarks.forEach(folder => {
+            totalBookmarks += folder.bookmarks.length;
+          });
+          this.stats.totalBookmarks = totalBookmarks;
+          this.stats.totalCategories = this.parsedBookmarks.length;
         },
 
         searchBookmarks() {
@@ -1074,13 +917,13 @@
             el.classList.remove('highlight');
           });
 
-          // 搜索和高亮
           const bookmarkItems = container.querySelectorAll('.bookmark-item');
           const folderTitles = container.querySelectorAll('.folder-title');
           const folderSections = container.querySelectorAll('.folder-section');
 
-          let matchCount = 0;
-          const regex = new RegExp(this.searchQuery, 'gi');
+          // 转义正则特殊字符，避免输入 ( [ + 等字符时 new RegExp 抛异常
+          const escaped = this.searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(escaped, 'gi');
 
           // 首先隐藏所有文件夹
           folderSections.forEach(section => {
@@ -1088,16 +931,14 @@
           });
 
           // 搜索匹配的项目
+          let matchCount = 0;
           [...bookmarkItems, ...folderTitles].forEach(element => {
-            const text = element.textContent;
-            if (text.match(regex)) {
+            if (element.textContent.match(regex)) {
               // 显示包含匹配项的文件夹
               const folderSection = element.closest('.folder-section');
               if (folderSection) {
                 folderSection.style.display = 'block';
               }
-
-              // 高亮匹配的文本
               element.classList.add('highlight');
               matchCount++;
             }
@@ -1116,7 +957,6 @@
           container.querySelectorAll('.highlight').forEach(el => {
             el.classList.remove('highlight');
           });
-
           container.querySelectorAll('.folder-section').forEach(section => {
             section.style.display = 'block';
           });
@@ -1125,28 +965,32 @@
         showToast(message, type = 'info') {
           const toast = document.getElementById('toast');
           const toastMessage = document.getElementById('toast-message');
+          if (!toast || !toastMessage) return;
 
           toastMessage.textContent = message;
 
-          // 设置不同类型的样式
           toast.className = 'toast show';
-          if (type === 'error') {
-            toast.style.borderColor = '#FF3B30';
-            toast.style.color = '#FF3B30';
-          } else if (type === 'success') {
-            toast.style.borderColor = '#34C759';
-            toast.style.color = '#34C759';
-          } else {
-            toast.style.borderColor = '#007AFF';
-            toast.style.color = '#007AFF';
-          }
+          const colors = { error: '#FF3B30', success: '#34C759', info: '#007AFF' };
+          const color = colors[type] || colors.info;
+          toast.style.borderColor = color;
+          toast.style.color = color;
 
-          // 3秒后自动隐藏
-          setTimeout(() => {
+          // 连续弹出的新 toast 会重置旧计时器，避免闪烁
+          clearTimeout(this._toastTimer);
+          this._toastTimer = setTimeout(() => {
             toast.classList.remove('show');
           }, 3000);
         }
       }
+    }
+
+    // Service Worker：仅在实际部署的 HTTP(S) 环境注册（file:// 下不可用）
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch((error) => {
+          console.warn('Service Worker 注册失败:', error.message);
+        });
+      });
     }
   </script>
 </body>
